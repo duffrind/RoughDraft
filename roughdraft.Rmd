@@ -29,4 +29,19 @@ data_na[order(-data_na$perc_na),]$col[43:194] # remove resampling, imputation, X
 ```{r}
 # linear, poisson regression
 # 
+library(dplyr)
+library(plyr)
+
+newdata <- select(data,
+                   #Predictors
+                   C0568, C0452, C0436, DISRUPT,SVPOL10, C0560, 
+                   #Response
+                   C0538,INCPOL10, GANGHATE, C0294)
+
+newdata <- rename(newdata, c("C0568" = "Attendance","C0452" = "Loss_of_privlege", 
+                  "C0436" =  "Loss_of_bus", "DISRUPT" = "Number_of_disruptions", 
+                  "SVPOL10" = "Violent_incedents_to_police", "C0560" = "Crime_where_students_live",
+                  "C0538" = "Classroom_changes", "INCPOL10" = "Incidents_reported_to_police",
+                  "GANGHATE" = "Gang_related_activites", "C0294" = "Lack_of_funds"))
+
 ```
