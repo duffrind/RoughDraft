@@ -3,17 +3,30 @@ title: "Rough Draft"
 output: pdf_notebook
 ---
 
-This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
-
-Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Cmd+Shift+Enter*. 
-
 ```{r}
-plot(cars)
+#data <- read.csv('/Users/duffrind/ncf/stat/RoughDraft/data/pu_ssocs10.csv', sep='\t')
+
+data <- read.csv('./data/pu_ssocs10.csv', sep='\t')
 ```
 
-Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Cmd+Option+I*.
+What are we trying to predict?
 
-When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Cmd+Shift+K* to preview the HTML file). 
+```{r}
+cols <- c()
+nas <- c()
 
-The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.
+for (col in colnames(data)) {
+  perc_na <- sum(data[,col] %in% c(-1, NA)) / nrow(data)
+  cols <- c(cols, col)
+  nas <- c(nas, perc_na)
+}
 
+data_na <- data.frame(cols, nas)
+colnames(data_na) <- c('col', 'perc_na')
+data_na[order(-data_na$perc_na),]$col[43:194] # remove resampling, imputation, X, and all columns with NA
+```
+
+```{r}
+# linear, poisson regression
+# 
+```
