@@ -4,8 +4,6 @@ output: pdf_notebook
 ---
 
 ```{r}
-#data <- read.csv('/Users/duffrind/ncf/stat/RoughDraft/data/pu_ssocs10.csv', sep='\t')
-
 data <- read.csv('./data/pu_ssocs10.csv', sep='\t')
 ```
 
