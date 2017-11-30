@@ -1,1 +1,43 @@
-If we had numerical data, we could center the factors to account for collinearity between the variables. We are unable to do this with our categorical data.
+#########Notes on analysis###################
+--Probably limit ourselves mostly to single-predictor models since our usual means of accounting for collinearity/association between predictors are inappropriate for categorical predictors
+
+--Many response variables are discrete data (eg total number of incidents). We may need to look at Poisson regression
+
+--A good deal of imputation has been done on the data.
+---Avg percent daily attendance was left as-is although it is suspected that the question was misinterpretted to mean percent daily absences. This results in a lot of outliers and should probably be inputed before being used.
+
+--The population of schools was stratified and the overall model was complicated. The documentation provides adjustments for variance of coefficients.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+########Predictors and Response##############
+-Avg percent daily attendance as a predictor:
+--of total police reports
+--of total # gang/hate crimes
+--of other crimes
+
+Avg percent daily attendance as response:
+--to loss of bus as form of punishment
+--to total # class disruptions
+--to serious violent incidents
+--to crime where students live
+
+
+
+
