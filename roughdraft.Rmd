@@ -33,7 +33,6 @@ library(plyr)
 newdata <- select(data,
                    #Predictors
                    C0568, C0452, C0436, DISRUPT,SVPOL10, C0560, 
-                   #Response
                    C0538,INCPOL10, GANGHATE, C0294)
 
 newdata <- rename(newdata, c("C0568" = "Attendance","C0452" = "Loss_of_privlege", 
