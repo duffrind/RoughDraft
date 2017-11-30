@@ -1,0 +1,1 @@
+If we had numerical data, we could center the factors to account for collinearity between the variables. We are unable to do this with our categorical data.
