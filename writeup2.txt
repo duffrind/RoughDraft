@@ -1,0 +1,18 @@
+Are there any problems with your data (e.g. missing values)?
+There are missing values in 41 columns with upwards of ~90% NA.
+Also, we have mostly categorical variables (which is supposed to retain anonymity/privacy for the schools. to protect respondents’ confidentiality)
+
+Are there any surprises in your data (e.g. outliers)?
+Average daily attendance has large groups in the 90-100% range as well as the 0-10% range, which shows that some schools did not understand the question and recorded the average daily absence rather than attendance.
+
+Visualize your data using ggplot or other R tools. Conduct inference (hypothesis tests, confidence intervals, etc.) to address these questions as appropriate. Explain your results in writing. Possible analysis includes:
+
+    Hypothesis test for a mean or proportion (to test a claim based on previous research, for example)
+    Hypothesis test for the difference of two means or two proportions (to compare two groups)
+    Confidence intervals to estimate parameters
+    Regression analysis and inference to study the relationship between your variables; include F-tests, t-tests, ANOVA.
+    Model selection and regression diagnostics, where appropriate.
+    Transformations of data, if appropriate
+    Optional: intermediate statistical methods if appropriate (e.g. logistic regression, time series). These are not required since we are not covering them in this class, but if you are already familiar with some of these, you are welcome to use them in your project.
+
+Post-stratification (section 6.2)
