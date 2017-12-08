@@ -1,5 +1,5 @@
 #########Notes on analysis###################
---Probably limit ourselves mostly to single-predictor models since our usual means of accounting for collinearity/association between predictors are inappropriate for categorical predictors
+--Probably limit ourselves mostly to single-predictor models since our usual means of accounting for collinearity/association between predictors are inappropriate for categorical predictors. QQ plots, etc for binary predictors don't make sense.
 
 --Many response variables are discrete data (eg total number of incidents). We may need to look at Poisson regression
 
@@ -8,35 +8,33 @@
 
 --The population of schools was stratified and the overall model was complicated. The documentation provides adjustments for variance of coefficients.
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 ########Predictors and Response##############
 -Avg percent daily attendance as a predictor:
---of total police reports
---of total # gang/hate crimes
---of other crimes
+--of total police reports (discrete)
+--of total # gang/hate crimes (discrete)
+--of other crimes (?)
 
 Avg percent daily attendance as response:
---to loss of bus as form of punishment
---to total # class disruptions
---to serious violent incidents
---to crime where students live
+--to loss of bus as form of punishment (binary)
+--to loss of privileges as form of punishment (binary)
+--to total # class disruptions (discrete)
+--to serious violent incidents (discrete)
+--to crime where students live (categorical)
+---try backward elimination?
+---look at effect sizes for binary variables?
+
+
+Crisis Plans as Predictor:
+--of violent incidences (discrete)
+---effect size
+
+
+#########Outliers, etc###################
+-One school had 1240 violent incidences. Next highest is ~300. Avg was 19.
+-Most schools' gang related incidents are at or below 60, but a small number are hovering in the 150s.
+-
+
+
 
 
 
