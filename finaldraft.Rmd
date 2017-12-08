@@ -1,0 +1,299 @@
+---
+title: "Data display, ggplot2"
+output:
+  html_document:
+    toc: yes
+  pdf_document:
+    latex_engine: xelatex
+    number_sections: yes
+    toc: yes
+    toc_depth: 4
+linkcolor: red
+urlcolor: red
+---
+
+```{r}
+library(ggplot2)
+library(dplyr)
+library(plyr)
+library(leaps)
+
+
+
+data <- read.csv('./data/pu_ssocs10.csv', sep='\t')
+```
+
+#Data Exploration and examination
+
+Our data comes from the National Center for Education Statistics' 2009-2010 School Survey on Crime and Safety. It The data is accompanied by a thorough write-up on initial treatment of the data. 
+
+
+First we pulled in the full CSv of all 400 variables. Many of the columns are simply imputation flags for previous columns. A great deal of imputation has been done on the data, and entries of -1 were entered for questions left unanswered by a school. We examined the data to see which, if any columns were too incomplete to be useful. 
+
+
+```{r}
+cols <- c()
+nas <- c()
+
+for (col in colnames(data)) {
+  perc_na <- sum(data[,col] %in% c(-2, -1, NA)) / nrow(data)
+  cols <- c(cols, col)
+  nas <- c(nas, perc_na)
+}
+
+data_na <- data.frame(cols, nas)
+colnames(data_na) <- c('col', 'perc_na')
+data_na[order(-data_na$perc_na),]$col[43:194] # remove resampling, imputation, X, and all columns with NA
+```
+
+
+From the remaining columns, we found a few interesting features to examine more closely. In particular, we are interested in
+
+1) Can the total number of violent incidences on a campus be predicted by anything? Does training for teachers make a difference in how many cases occur/how many get reported to the police? Is there any association between attendance and crime on campus?
+2) Whether or not attendance is a predictor of crime, does crime affect attendance? Does anything else--taking away bus privileges, for example? High crime in the area?
+3) Do violence drills (bomb threat drills, shooter drills, etc) have any effect on the occurence of violence on campuses?
+4) Does having random drug sniffs affect crime incidents on campus, violent or otherwise?
+
+Each response variable has a number of possible predictors variables. We may attempt backward elimination to select the best models.Similarly, the majority of schools had very few incidents reported to the police, but one school reported as many as 1240 in one year.
+
+We grab the relevant columns and rename them for clarity.
+
+```{r}
+newdata <- select(data,
+                   #Predictors
+                   C0568, C0452, C0436, DISRUPT,SVPOL10, C0560, 
+                   C0538,INCPOL10, GANGHATE, C0294, C0156, C0172, C0124, C0276, C0277, C0272, DISTOT10, DISDRUG10)
+
+newdata <- rename(newdata, c("C0568" = "Attendance","C0452" = "Losspriv", 
+                  "C0436" =  "Lossbus", "DISRUPT" = "Numdisrpt", 
+                  "SVPOL10" = "srs_to_police", "C0560" = "Crime_nbhd",
+                  "C0538" = "Classchange", "INCPOL10" = "Incpol",
+                  "GANGHATE" = "GANGHATE", "C0294" = "Lack_of_funds", "C0156" ="shootingdrills", "C0172" = "threatdrills", "C0124"="Dogsniffs", "C0276" = "Posbehav", "C0277" = "crisistraining", "C0272"= "warntraining", "DISTOT10"= "DISTOT", "DISDRUG10" = "DISDRUG"))
+
+```
+In the data description it is mentioned that although a lot of imputation has been done on the data to ensure logical coherence, etc, one column that was left alone was the percent daily attendance. It is further suggested that there is reason to believe some responders may have misinterpretted the question to be about daily percent *absences*, resulting in outlandishly low estimates in some cases. 
+
+```{r}
+ggplot(newdata, aes(Attendance)) + geom_histogram()
+```
+
+The number of such cases appears to be small, but possibly not insignificant. We will perform our own imputation according to this assumption by imputing x->100-x for reports below 25%. This is a very conservative adjustment, and will probably leave many erroneous reports uncorrected.
+
+```{r}
+newdata$Attendance <- sapply(newdata$Attendance, function(x) ifelse(x > 25, x, 100-x))
+```
+
+
+
+Many of the types of analysis we would like to do are limited by the privacy suppression of the data. Many of the predictor and response variables that might have been continuous/numerical have been binned and made categorical. Many others are discrete counts (like total number of incidents), making linear regression inappropriate, since, among other things, descrete errors cannot be normally distributed. We may consider Poisson regression for some analyses with these variables.
+
+The method of sampling also requires attention: schools were thoroughly stratefied. The pdf gives details of adjustments that need to be made on estimates of various statisticts.
+
+In any case, we can still look at the effect size of various predictors: for example, is the average number of crimes significantly higher in schools that drill for crimes? Is it lower in schools that have violence prevention training for teachers?
+
+Another peculiarity of the data is that much of it is extremely skewed. The vast majority of schools surveyed reported 0 gang related incedents on campus, but many others reported high numbers, making most of the "interesting" cases technically outliers (by the 2.5*IQR standard). Similarly, the majority of schools had very few incidents reported to the police, but one school reported as many as 1240 in one year.
+
+
+```{r}
+ggplot(newdata, aes(GANGHATE))+geom_histogram()
+```
+
+```{r ECHO = TRUE}
+boxplot(newdata$GANGHATE)
+
+```
+
+Similarly, the majority of schools had very few incidents reported to the police, but one school reported as many as 1240 in one year.
+
+```{r}
+boxplot(newdata$Incpol)
+```
+
+```{r}
+ggplot(newdata, aes(Incpol))+geom_histogram()
+```
+
+In exploring the question about attendance as a response variable, we examine the scatter plots to check for any patterns.
+
+```{r}
+att <- data.frame(newdata$Attendance,newdata$Losspriv,newdata$Lossbus,newdata$srs_to_police,newdata$Crime_nbhd,newdata$Incpol,newdata$GANGHATE)
+colnames(att) <- c("Attendance", "Losspriv", "Lossbus", "srs_to_police", "Crime_nbhd", "Incpol", "GANGHATE")
+plot(att)
+```
+
+```{r}
+newdata %>%
+  group_by(Lossbus) %>%
+  ggplot(., aes(factor(Lossbus), Attendance)) + 
+  geom_boxplot() + ggtitle("Factored Loss of Bus Privilege vs Attendance Percentage Rate") + 
+  xlab("Loss of bus Privilege 'Factored'") + ylab("Student Attendance") + 
+  labs(caption = "-1 Indicated question was not answered.  1 = Yes, 2 = No") +
+  ggsave("Factored Loss of Bus Privilege vs Attendance Percentage Rate.png")
+
+#Loss of individual Privileges vs Attendance
+newdata %>%
+  group_by(Losspriv) %>%
+  ggplot(., aes(factor(Losspriv), Attendance)) + 
+  geom_boxplot() + ggtitle("Factored Loss of Individual Student Privileges vs Attendance Percentage Rate") + 
+  xlab("Loss of Individual Privilege 'Factored'") + ylab("Student Attendance") + 
+  labs(caption = "-1 Indicated question was not answered.  1 = Yes, 2 = No") + 
+  ggsave("Factored Loss of Individual Student Privileges vs Attendance Percentage Rate.png")
+
+#Crime in Neighborhood vs Attendance
+newdata %>%
+  group_by(Crime_nbhd) %>%
+  ggplot(., aes(factor(Crime_nbhd), Attendance)) + 
+  geom_boxplot() + ggtitle("Factored Crime in Neighborhood vs Attendance Percentage Rate") + 
+  xlab("Crime in Neighborhood 'Factored'") + ylab("Student Attendance") + 
+  labs(caption = "-1 Indicated question was not answered. 1 = Worst, 4 = Best") + 
+  ggsave("Factored Crime in Neighborhood vs Attendance Percentage Rate.png")
+
+#Incedents reported to Police vs Attendance
+qplot(Attendance,Incpol, data = newdata, 
+      geom = c("point", "smooth")) + ylab("Incedents reported to Police") + 
+  ggsave("Attendance vs Police.png")
+
+#Gang Related Incedents vs Attendance
+qplot(Attendance, GANGHATE, data = newdata,
+      geom= c("point", "smooth")) + ylab("Gang Related Incedents") + 
+  ggsave("Attendance vs Gang activity.png")
+
+#Violent Incedents Reported to Police vs Attendance 
+newdata %>%
+  group_by(srs_to_police) %>%
+  ggplot(., aes(factor(srs_to_police), Attendance)) + 
+  geom_boxplot() + ggtitle("Violent Incedents Reported vs Attendance Percentage Rate") + 
+  xlab("Violent Incedents Reported 'Factored'") + ylab("Student Attendance")
+```
+
+
+
+
+```{r}
+att.data <- newdata[,"Losspriv" != -1 & "Lossbus" != -1]
+att.data <- mutate(att.data, srs0 = ifelse(srs_to_police == 0, 0, 1), Inc0 = ifelse(Incpol == 0, 0, 1), GANG0 = ifelse(GANGHATE ==0, 0, 1)) %>% select(Attendance, Losspriv,Lossbus, srs_to_police, Crime_nbhd, Incpol, GANGHATE, srs0, Inc0, GANG0)
+att.viol.lm <- lm(Attendance ~ Losspriv + Lossbus + srs_to_police + Crime_nbhd + Incpol + GANGHATE, data = newdata)
+att.viol.summ <- summary(att.viol.lm)
+plot(att.viol.lm, which = 4)
+```
+A look at the Cook's distance for the data in our naive linear model for predicting attendance shows that at least on of the data points may have outsize influence on the model.
+
+```{r}
+plot(att.viol.lm, which = 2)
+```
+
+We also have some pretty heavy tails. We'll examine the summary of the model before attempting to correct it.
+
+```{r}
+att.viol.summ
+```
+
+In any event, although some of the predictors have low p values, the R-squared is terrible, and all of the coefficients are so tiny that any effect is unlikely to have practical significance, should they turn out to in fact have statistical significance. Also, loss of bus privileges appears to correlate *positively* with increased attendance, according to this model, which is unexpected.
+
+Before trying a reduced model, we take a side-track to test the hypothesis that taking away bus privileges as a form of punishment affects mean attendance.
+
+```{r}
+all.bus <- data.frame(matrix(c(newdata$Attendance,newdata$Lossbus),ncol=2))
+colnames(all.bus) <- c("Attendance", "Lossbus")
+all.bus <- all.bus[all.bus$Lossbus != -1,]
+
+t.test(Attendance ~ Lossbus, paired = FALSE, var.equal = FALSE, data = all.bus)
+
+
+```
+
+The ninety-five percent confidence interval for the difference in group means excludes zero, so we are forced to reject the null hypothesis and conclude that loss of bus privileges has *some* effect on attendance.
+
+Before moving on to eliminating apparently insignificant variables, we try the same model again with severe outliers removed to see if we get any improvement.
+
+
+```{r}
+##The Cook's distance plot showed that point 1517 is an influential outlier.
+att.data.clean <- att.data[-1517,]
+
+att.viol.lm.clean <- lm(Attendance ~ ., data = att.data.clean)
+summary(att.viol.lm.clean)
+```
+
+Not much improvement at first glance. We'll examine the change in coefficients to be sure.
+
+```{r}
+(att.coef.diffs <- (att.viol.summ$coefficients[,1] - att.viol.summ.clean$coefficients[,1])/att.viol.summ$coefficients[,1])
+```
+
+We do see some sizeable percent-differences in the coefficients, but it is important to recall that the coefficients were quite small to begin with, and they remain tiny after the change. Since we already looked at the Cook's distance we already have information about the change in $\hat{Y}$ relative to the MSE of the original model when data point 1517 is removed, and we know that it is sizeable, so we will leave the point out. 
+
+We still need to further deal with our error assumption violations.
+
+We saw above that our errors are evidently non-normal. We'll check the clean fit (without 1517) just to be sure.
+
+```{r}
+plot(att.viol.lm.clean, which = 2)
+```
+
+They still look pretty non-normal, but is it significant? Before we can check formally, we look for heteroscedasticity.
+
+```{r}
+att.predictions <- predict(att.viol.lm.clean, newdata = (att.data.clean %>% select(-Attendance)))
+att.data.clean <- cbind(att.data.clean, yhat=att.predictions)
+att.errors <- att.data.clean$Attendance-att.data.clean$yhat
+cbind(att.data.clean, errors=att.errors) %>% select(-c(Attendance, yhat)) %>% pairs()
+```
+
+It does seem like there is some association between the magnitude of the errors and the variables GANGHATE, srs_to_police, and Incpol--all of the non-categorical variables.
+
+This means that we should choose the Kolmogorov-Smirnov test for normality of the errors rather than the Shapiro-Wilkes test.
+
+```{r}
+ks.test(att.errors, pnorm)
+```
+
+The test shows that the non-normality is quite significant. The evidence examined so far suggests that the relationships, if any, between the variables included in the model are unlikely to be linear.
+
+#Here, we need to try looking at some polynomial models, added variable plots, etc before looking for a reduced model.
+
+
+
+
+We seek a reduced model.
+
+
+```{r}
+allpossreg <- regsubsets(Attendance ~ ., 
+                         nbest=6, data=att)
+
+aprout <- summary(allpossreg)
+
+with(aprout,round(cbind(which,rsq,adjr2,cp,bic),3)) ### AIC is not an option
+```
+
+The model with by far the lowest BIC score includes only the amount of crime in the neighborhood of the school. The R-squareds are all terrible no matter what.The only other model with nearly as low a BIC as the crime-only model is the loss of bus privileges, which we effectively ruled out above. We conclude that the best model is the one including only self-reported rating for incidence of crime in the neighorhood of the school, and that it is not a very good model anyway.
+
+We now move on to the question of whether disaster drills relating to violence affect the mean number of violent incidents. We first check to see if any schools have ommited information about drills and remove them.
+
+```{r}
+unique(newdata$shootingdrills)
+unique(newdata$threatdrills)
+
+drills <- data.frame(matrix(c(newdata$srs_to_police, newdata$Incpol, newdata$shootingdrills, newdata$threatdrills), ncol = 4))
+colnames(drills) <- c("srs_to_police", "Incpol", "shootingdrills", "threatdrills")
+drills.shoot <- drills[drills$shootingdrills != -1,]
+
+t.test(srs_to_police~ shootingdrills, paired = FALSE, var.equal = FALSE, data = drills.shoot)
+
+
+
+```
+Once again, we conclude that there is insufficient evidence to reject the null hypothesis, and that shooter drills do not appear to affect the number of serious violent incidents on campus.
+
+
+```{r}
+drills.threat <- drills[drills$threatdrills != -1,]
+t.test(srs_to_police~ threatdrills, paired = FALSE, var.equal = FALSE, data = drills.threat)
+
+```
+And again we fail to reject the null hypothesis. It seems that other violence-related drills also do not affect serious crime reports.
+
+
+
+
