@@ -1,0 +1,212 @@
+---
+title: "Rough Draft"
+output: pdf_notebook
+---
+
+```{r}
+data <- read.csv('./data/pu_ssocs10.csv', sep='\t')
+```
+
+What are we trying to predict?
+
+```{r}
+cols <- c()
+nas <- c()
+
+for (col in colnames(data)) {
+  perc_na <- sum(data[,col] %in% c(-1, NA)) / nrow(data)
+  cols <- c(cols, col)
+  nas <- c(nas, perc_na)
+}
+
+data_na <- data.frame(cols, nas)
+colnames(data_na) <- c('col', 'perc_na')
+data_na[order(-data_na$perc_na),]$col[43:194] # remove resampling, imputation, X, and all columns with NA
+```
+
+```{r}
+# linear, poisson regression
+# 
+library(dplyr)
+library(plyr)
+
+newdata <- select(data,
+                  #Predictors
+                  C0568, C0452, C0436, DISRUPT,SVPOL10, C0560,
+                  C0538,INCPOL10, GANGHATE, C0294, C0156, C0172, C0124, C0276, C0277, C0272, DISTOT10, DISDRUG10)
+
+newdata <- rename(newdata, c("C0568" = "Attendance","C0452" = "Losspriv",
+                 "C0436" =  "Lossbus", "DISRUPT" = "Numdisrpt",
+                 "SVPOL10" = "srs_to_police", "C0560" = "Crime_nbhd",
+                 "C0538" = "Classchange", "INCPOL10" = "Incpol",
+                 "GANGHATE" = "GANGHATE", "C0294" = "Lack_of_funds", "C0156" ="shootingdrills", "C0172" = "threatdrills", "C0124"="Dogsniffs", "C0276" = "Posbehav", "C0277" = "crisistraining", "C0272"= "warntraining", "DISTOT10"= "DISTOT", "DISDRUG10" = "DISDRUG"))
+
+```
+
+```{r ECHO = TRUE}
+
+library(ggplot2)
+library(dplyr)
+# 
+# head(newdata)
+# 
+# glm(Incidents_reported_to_police ~ shootingdrills + Classroom_changes, data = newdata, family = "poisson")
+# 
+# a <- glm(Attendance ~ ., data = newdata, family = "poisson")
+# summary(a)
+# 
+# b <- glm(Gang_related_activites ~ ., data = newdata, family = "poisson")
+# summary(b)
+# 
+# 
+# c <- lm(Attendance ~ Loss_of_bus, data = newdata)
+# summary(c)
+# plot(c)
+# plot(newdata$Lack_of_funds, newdata$Attendance)
+
+## shows outliers for 
+# ggplot(newdata, aes(newdata$Lack_of_funds, newdata$Attendance)) + geom_point()
+# qplot(data = newdata, newdata$Lack_of_funds, newdata$Attendance)
+
+
+### Visualizing Discrete data vs attendance
+newdata %>%
+  group_by(Lack_of_funds) %>%
+  ggplot(., aes(factor(Lack_of_funds), Attendance)) + 
+  geom_boxplot() + ggtitle("Factored Lack of School Funds vs Student Attendance rate") + 
+  xlab("Lack of Funding") + ylab("Attendance Percentage") + 
+  labs(caption = "1 being most severe Lack of School Funding") + 
+  ggsave("Factored Lack of School Funds vs Student Attendance rate.png")
+
+#Shooting Drills vs Incedents Reported to Police
+newdata %>%
+  group_by(shootingdrills) %>%
+  ggplot(., aes(factor(shootingdrills), Incpol)) + 
+  geom_boxplot() + ggtitle("Factored Shooting Drills vs Incedents Reported to Police") + 
+  xlab("Shooting Drills 'Factored'") + ylab("Incedents Reported to Police") + 
+  labs(caption = "-1 Indicated question was not answered. 1 = Yes, 2 = No") + 
+  ggsave("Factored Shooting Drills vs Incedents Reported to Police.png")
+
+#Bomb threat drills vs Incedents Reported to Police
+newdata %>%
+  group_by(threatdrills) %>%
+  ggplot(., aes(factor(threatdrills), Incpol)) + 
+  geom_boxplot() + ggtitle("Factored Bomb Threat Drills vs Incedents Reported to Police") + 
+  xlab("Bomb Threat Drills") + ylab("Incedents Reported to Police") + 
+  labs(caption = "-1 Indicated question was not answered. 1 = Yes, 2 = No") + 
+  ggsave("Factored Bomb Threat Drills vs Incedents Reported to Police.png")
+
+#Crime in Neighborhood vs Incedents Reported to Police
+newdata %>%
+  group_by(Crime_nbhd) %>%
+  ggplot(., aes(factor(Crime_nbhd), Incpol)) + 
+  geom_boxplot() + ggtitle("Factored Crime in Neighborhood vs Incedents Reported to Police") + 
+  xlab("Crime in Neighborhood 'Factored'") + ylab("Incedents Reported to Police") + 
+  labs(caption = "-1 Indicated question was not answered.  1 = Worst, 4 = Best")  + 
+  ggsave("Factored Crime in Neighborhood vs Incedents Reported to Police.png")
+
+#Crime in Neighborhood vs Attendance
+newdata %>%
+  group_by(Crime_nbhd) %>%
+  ggplot(., aes(factor(Crime_nbhd), Attendance)) + 
+  geom_boxplot() + ggtitle("Factored Crime in Neighborhood vs Attendance Percentage Rate") + 
+  xlab("Crime in Neighborhood 'Factored'") + ylab("Student Attendance") + 
+  labs(caption = "-1 Indicated question was not answered. 1 = Worst, 4 = Best") + 
+  ggsave("Factored Crime in Neighborhood vs Attendance Percentage Rate.png")
+
+#Loss of bus privledges vs Attendance
+newdata %>%
+  group_by(Lossbus) %>%
+  ggplot(., aes(factor(Lossbus), Attendance)) + 
+  geom_boxplot() + ggtitle("Factored Loss of Bus Privledge vs Attendance Percentage Rate") + 
+  xlab("Loss of bus privledge 'Factored'") + ylab("Student Attendance") + 
+  labs(caption = "-1 Indicated question was not answered.  1 = Yes, 2 = No") +
+  ggsave("Factored Loss of Bus Privledge vs Attendance Percentage Rate.png")
+
+#Loss of individual privledges vs Attendance
+newdata %>%
+  group_by(Losspriv) %>%
+  ggplot(., aes(factor(Losspriv), Attendance)) + 
+  geom_boxplot() + ggtitle("Factored Loss of Individual Student Privledges vs Attendance Percentage Rate") + 
+  xlab("Loss of Individual privledge 'Factored'") + ylab("Student Attendance") + 
+  labs(caption = "-1 Indicated question was not answered.  1 = Yes, 2 = No") + 
+  ggsave("Factored Loss of Individual Student Privledges vs Attendance Percentage Rate.png")
+
+# Drug Dog sniffs vs Attendance 
+newdata %>%
+  group_by(Dogsniffs) %>%
+  ggplot(., aes(factor(Dogsniffs), Incpol)) + 
+  geom_boxplot() + ggtitle("Random Drug Dog Search vs Incedents Reported to Police") + 
+  xlab("Random Drug Dog Search") + ylab("Incedents Reported to Police") + 
+  labs(caption = "1 = Yes, 2 = No") + 
+  ggsave("Random Drug Dog Search vs Incedents Reported to Police.png")
+
+# Positive behavior intervention training vs Incedents reported to Police
+newdata %>%
+  group_by(Posbehav) %>%
+  ggplot(., aes(factor(Posbehav), Incpol)) + 
+  geom_boxplot() + ggtitle("Positive behavior intervention training vs Incedents Reported to Police") + 
+  xlab("Positive behavior intervention training'") + ylab("Incedents Reported to Police") + 
+  labs(caption = "1 = Yes, 2 = No") + 
+  ggsave("Positive behavior intervention training vs Incedents Reported to Police.png")
+
+
+
+## Searching for potential relationships between variables
+# 
+# # ggplot(newdata, aes(Incpol,Attendance )) + geom_point() +
+#   ggtitle("Incedents Reported to Police vs Student Attendance rate") + 
+#   xlab("Incedents Reported to Police") + ylab("Attendance Percentage")
+# 
+# ggplot(newdata, aes(Numdisrpt,Attendance )) + geom_bar() +
+#   ggtitle("Incedents Reported to Police vs Student Attendance rate") + 
+#   xlab("Incedents Reported to Police") + ylab("Attendance Percentage")
+
+
+qplot(Attendance,Numdisrpt, data = newdata, 
+      geom = c("point", "smooth")) + ylab("Number of Disruptions")
++ ggsave("Attendance vs Number of Disruptions.png")
+  
+qplot(Attendance,Incpol, data = newdata, 
+      geom = c("point", "smooth")) + ylab("Incedents reported to Police") + 
+  ggsave("Attendance vs Police.png")
+
+qplot(Attendance, GANGHATE, data = newdata,
+      geom= c("point", "smooth")) + ylab("Gang Related Incedents") + 
+  ggsave("Attendance vs Gang activity.png")
+
+qplot(Incpol, DISTOT, data = newdata,
+      geom= c("point", "smooth")) + 
+  xlab("Incedents reported to Police") + 
+  ylab("Total Number of Disciplinary Actions") + 
+  ggsave("Police vs Disciplinary Actions.png")
+  
+
+
+#There are several outliers that we will have to account for
+
+
+# + ggsave("")
+# 
+# 
+# 
+# ggplot(newdata, aes(newdata$Lack_of_funds)) + geom_bar()
+# 
+# ggplot(newdata, aes(f1,newdata$Attendance)) + geom_boxplot()
+# 
+# ggplot(c)
+# p <- ggplot(newdata, aes(newdata$Lack_of_funds, newdata$Attendance)) + geom_boxplot()
+# 
+# 
+# f1 <- (newdata$Lack_of_funds== 1)
+# boxplot(f1, newdata$Attendance)
+
+
+
+```
+
+
+
+
+
+
