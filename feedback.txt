@@ -1,0 +1,25 @@
+Overall, this looks good. 
+
+A couple thoughts and suggestions:
+
+*A number of your predictors are zero-inflated, meaning that a large percentage of the values are zero (but some are nonzero and substantially larger). In this case, it is standard practice to include both the linear effect of the variable (e.g. X1) and an indicator about whether X1 is zero or not (e.g. X2 = 1 if X1 is !=0 and X2 = 0 o/w). This helps make the model slightly more flexible. See here for more details: https://stats.stackexchange.com/questions/56306/time-spent-in-an-activity-as-an-independent-variable
+
+*Outlier and influential outlier detection is going to be very important for your project. I was glad to see the plot of Cook's distance in your work. Note that when you remove the outliers to check the effect, you are not simply looking to see if R^2 improves (or worsens) but also the extent to which your coefficient estimates and y-hat's change.
+
+*FYI (minor detail) I think you mean "privilege" not "privledge". 
+
+* In the graph of Violent Incidents Reported vs Attendance Percentage Rate, I'm curious about why violent incidents are being treated as a factor. Is this in order to provide a density estimate at each level or is it because Violent Incidents is discrete?
+
+* It's possible there might be an association between attendance and small amounts of violent incidents. It does not appear that the relationship is linear though, so either consider trying a nonlinear relationship or adding in a second indicator variable for high crime (if you are using crime as a predictors-- I thought it was supposed to be the response variable). 
+
+* Also, when looking at the functional form of a relationship between Y and X, it's a good idea to consider an added variable plot in addition to a marginal plot. 
+
+* I notice you found evidence of non-normality, but there doesn't seem to be any discussion of whether the non-normality is likely to be significant or not. Have you considered formal inferential methods? Also, non-normality and non-constant error variance often go together, but I don't see a discussion of the latter here. Finally, if you do find evidence of significant problems, you should consider a transformation of your response variable (e.g. via Box-Cox) to see if that helps. 
+
+* It looks to me that your confidence interval (for whether the loss of bus privileges affects attendance) does NOT include 0 and has a significant p-value, which makes your interpretation somewhat confusing.
+
+* You've done a good job with model selection so far, but I think you can code it more efficiently with the methods we just covered in class. This may also help organize your output to be clearer. 
+
+* You are right to note that the R^2's for your models are so low as to render them useless for most practical tasks. This is a good conclusion based on the evidence. It either means that there is no association between the variables and we should look for a new set of predictors, or it means that the association is non-linear and our model isn't picking up on it. It is unclear which is the case for some variables. Again, try residual plots and added variable plots to help examine the evidence. 
+
+* You have a great process in analyzing your data-- everything looks good. When you give the presentation, just make sure to explain what you are doing and why, though; your plots should always support your arguments (not the other way around).
