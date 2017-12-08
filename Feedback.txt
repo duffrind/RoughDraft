@@ -4,7 +4,7 @@ A couple thoughts and suggestions:
 ---------------------------------
 *A number of your predictors are zero-inflated, meaning that a large percentage of the values are zero (but some are nonzero and substantially larger). In this case, it is standard practice to include both the linear effect of the variable (e.g. X1) and an indicator about whether X1 is zero or not (e.g. X2 = 1 if X1 is !=0 and X2 = 0 o/w). This helps make the model slightly more flexible. See here for more details: https://stats.stackexchange.com/questions/56306/time-spent-in-an-activity-as-an-independent-variable
 
-O Dealt with this. -Joe
+OO Dealt with this. -Joe
 ---------------------------------
 *Outlier and influential outlier detection is going to be very important for your project. I was glad to see the plot of Cook's distance in your work. Note that when you remove the outliers to check the effect, you are not simply looking to see if R^2 improves (or worsens) but also the extent to which your coefficient estimates and y-hat's change.
 
