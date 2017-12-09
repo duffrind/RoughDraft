@@ -240,9 +240,13 @@ att.errors <- att.data.clean$Attendance-att.data.clean$yhat
 cbind(att.data.clean, errors=att.errors) %>% select(-c(Attendance, yhat)) %>% pairs()
 ```
 
-It does seem like there is some association between the magnitude of the errors and the variables GANGHATE, srs_to_police, and Incpol--all of the non-categorical variables.
+```{r}
+plot(att.predictions, att.errors)
+```
 
-This means that we should choose the Kolmogorov-Smirnov test for normality of the errors rather than the Shapiro-Wilkes test.
+It does seem like there is some association between the magnitude of the errors and the variables GANGHATE, srs_to_police, and Incpol--all of the non-categorical variables. However, it's not conclusive, and looking at the plot of the errors against predicted values, it doesn't seem like there is too much cause for alarm.
+
+To be safe, we should choose the Kolmogorov-Smirnov test for normality of the errors rather than the Shapiro-Wilkes test.
 
 ```{r}
 ks.test(att.errors, pnorm)
