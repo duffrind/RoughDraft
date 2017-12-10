@@ -1,7 +1,7 @@
 --------------------------------
 * In the graph of Violent Incidents Reported vs Attendance Percentage Rate, I'm curious about why violent incidents are being treated as a factor. Is this in order to provide a density estimate at each level or is it because Violent Incidents is discrete?
 
-X Did not address this. -Joe
+X Did not address this. -Joe - Done -Mike
 --------------------------------
 * Also, when looking at the functional form of a relationship between Y and X, it's a good idea to consider an added variable plot in addition to a marginal plot. 
 
@@ -9,7 +9,12 @@ X We still need to include this. We found better linear models with the zero fla
 --------------------------------
 * I notice you found evidence of non-normality, but there doesn't seem to be any discussion of whether the non-normality is likely to be significant or not. Have you considered formal inferential methods? Also, non-normality and non-constant error variance often go together, but I don't see a discussion of the latter here. Finally, if you do find evidence of significant problems, you should consider a transformation of your response variable (e.g. via Box-Cox) to see if that helps. 
 
+-Done Mike
+
 (.5)O Included examination of heteroscedasticity, but have not looked into variable transformations. I did the KS-test for non-normality and found that it is significant. We probably need to address this, but that part of it, at least, can be explored by trying some higher-order linear models, etc etc.-Joe
+
+- added some polynomial models. - Mike 
+- Made model comparison's of categorical variable vs non categorical variables. - Mike
 --------------------------------
 * You've done a good job with model selection so far, but I think you can code it more efficiently with the methods we just covered in class. This may also help organize your output to be clearer.
 
